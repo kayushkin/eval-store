@@ -182,3 +182,15 @@ func TestBudgetVerdictStopsAboveALimitOnAStaleReadingAndOnAMissingOne(t *testing
 		t.Errorf("missing reading: %q", verdict)
 	}
 }
+
+func TestTheDefaultBudgetLimitsSettingParses(t *testing.T) {
+	limits, err := ParseBudgetLimits(map[string]string{"codex.weekly": "60", "anthropic.seven_day": "40"})
+	if err != nil || len(limits) != 2 || limits[0] != (BudgetLimit{Subscription: "anthropic", Window: "seven_day", MaxUsedPercent: 40}) {
+		t.Errorf("limits %+v, %v", limits, err)
+	}
+	for _, bad := range []map[string]string{{"codex": "60"}, {"codex.weekly": "0"}, {"codex.weekly": "many"}} {
+		if _, err := ParseBudgetLimits(bad); err == nil {
+			t.Errorf("%v parsed", bad)
+		}
+	}
+}

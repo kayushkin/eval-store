@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -142,4 +144,24 @@ func getJSON(ctx context.Context, client *http.Client, endpoint string, target a
 		return fmt.Errorf("GET %s: %w", endpoint, err)
 	}
 	return nil
+}
+
+// ParseBudgetLimits reads the default_budget_limits setting's
+// subscription.window:percent pairs, in a stable order.
+func ParseBudgetLimits(pairs map[string]string) ([]BudgetLimit, error) {
+	keys := make([]string, 0, len(pairs))
+	for key := range pairs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	limits := make([]BudgetLimit, 0, len(keys))
+	for _, key := range keys {
+		subscription, window, found := strings.Cut(key, ".")
+		percent, err := strconv.ParseFloat(pairs[key], 64)
+		if !found || subscription == "" || window == "" || err != nil || percent <= 0 || percent > 100 {
+			return nil, fmt.Errorf("%s:%s is not subscription.window:percent with a percent in (0, 100]", key, pairs[key])
+		}
+		limits = append(limits, BudgetLimit{Subscription: subscription, Window: window, MaxUsedPercent: percent})
+	}
+	return limits, nil
 }
