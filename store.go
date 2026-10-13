@@ -82,7 +82,10 @@ func Open(dataDir string) (*Store, error) {
 	if err := requirePrivateMode(databasePath, 0o600); err != nil {
 		return nil, err
 	}
-	db, err := sql.Open("sqlite3", databasePath+"?_foreign_keys=on&_busy_timeout=10000&_journal_mode=WAL")
+	// Transactions begin IMMEDIATE: a run records answers from several
+	// goroutines, and a transaction that reads before it writes would otherwise
+	// fail with "database is locked" when two upgrade at once.
+	db, err := sql.Open("sqlite3", databasePath+"?_foreign_keys=on&_busy_timeout=10000&_journal_mode=WAL&_txlock=immediate")
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
