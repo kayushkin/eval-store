@@ -1,10 +1,3 @@
-<!--
-Draft of this repo's project prompt, for agent-store. Each "#" heading is a
-level-1 group with no text, each "##" heading a level-2 section. The tags for
-each section are in the table at the end; they are section metadata, not text.
-Once the collection exists and renders AGENTS.md and CLAUDE.md, delete this file.
--->
-
 # About eval-store
 
 ## What it owns
@@ -49,7 +42,7 @@ Two suites and eight completed runs (`origin` `legacy-import`) came from the 202
 
 ## Who may call it
 
-No authentication; the unit binds `127.0.0.1` because cases hold real mail. Nothing proxies it yet. Unit `eval-store.service` (user), binary `~/bin/eval-store serve`. The service token and `EVAL_STORE_ORGANIZATION_ID` come from host-local drop-ins in `~/.config/systemd/user/eval-store.service.d/`, never from the tracked unit.
+No authentication; the unit binds `127.0.0.1` because cases hold real mail. Nothing proxies it yet. Unit `eval-store.service` (user), binary `~/bin/eval-store serve`. The service token and `EVAL_STORE_ORGANIZATION_ID` come from host-local drop-ins in `~/.config/systemd/user/eval-store.service.d/`, never from the tracked unit. On this host the organization is `principal_000127` ("Model evaluations (eval-store)"), with a $100 monthly cap at list price set on llm-bridge-server's `/operation-budgets`; `GET /operation-budgets/principal_000127` shows what this month has spent.
 
 ## Importing from operations needs a bridge route
 
@@ -60,22 +53,3 @@ No authentication; the unit binds `127.0.0.1` because cases hold real mail. Noth
 ## Build, test and deploy
 
 Module `github.com/kayushkin/eval-store`, root package `evalstore`, one binary `cmd/eval-store` (`serve`, `import-legacy`, and a client verb per route against `EVAL_STORE_URL`). Every environment variable is declared once in `settings.go` with llm-bridge `servicesettings` (hence `replace ../llm-bridge` in `go.mod`); a set `EVAL_STORE_` variable nobody declared stops the service at boot, and `deploy.sh` checks the running service's environment first. The listen address has no default: the port lives in the unit. SQLite transactions begin IMMEDIATE because a run records answers from several goroutines. `go test ./...`; deploy only with `./deploy.sh` from `main`.
-
-<!--
-Tags per section:
-
-| Section | Tags |
-|---|---|
-| What it owns | eval-store, model-evaluation |
-| Cases hold real mail | eval-store, privacy |
-| Where this prompt lives | eval-store, prompts |
-| A run, from start to report | eval-store, model-evaluation, judging |
-| Every model call is a bridge operation | eval-store, llm-bridge, operations, idempotency |
-| The budget guard | eval-store, usage-store, budget |
-| Prices are frozen on the run | eval-store, model-store, cost |
-| Checkers and cost models belong to suites | eval-store, scheduler, email-classifier, demo-mail, cost |
-| The imported bench | eval-store, scheduler, model-roles |
-| Who may call it | eval-store, access, systemd |
-| Importing from operations needs a bridge route | eval-store, llm-bridge, operations |
-| Build, test and deploy | eval-store, build, deploy, servicesettings |
--->
