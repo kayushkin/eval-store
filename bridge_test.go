@@ -81,10 +81,10 @@ func succeedWithAnswer(intent msg.OperationIntent, receipt *msg.OperationReceipt
 }
 
 func testBridgeClient(url string) *BridgeClient {
-	return &BridgeClient{BaseURL: url, ServiceToken: "synthetic-service-token", PrincipalID: "principal_000901", PollInterval: time.Millisecond}
+	return &BridgeClient{BaseURL: url, ServiceToken: "synthetic-service-token", PollInterval: time.Millisecond}
 }
 
-func TestTheBridgeClientCallsAsItsPrincipalAndReadsTheReceipt(t *testing.T) {
+func TestTheBridgeClientCallsAsAnInternalServiceAndReadsTheReceipt(t *testing.T) {
 	bridge, server := newFakeBridge(succeedWithAnswer)
 	defer server.Close()
 	outcome, err := testBridgeClient(server.URL).Complete(context.Background(), CompletionRequest{OrganizationID: "principal_000900",
@@ -98,7 +98,7 @@ func TestTheBridgeClientCallsAsItsPrincipalAndReadsTheReceipt(t *testing.T) {
 		t.Errorf("outcome %+v", outcome)
 	}
 	header := bridge.headers[0]
-	if header.Get("X-LLM-Bridge-Service-Token") != "synthetic-service-token" || header.Get("X-Principal-Id") != "principal_000901" {
+	if header.Get("X-LLM-Bridge-Service-Token") != "synthetic-service-token" || header.Get("X-Principal-Id") != "" {
 		t.Errorf("headers %v", header)
 	}
 	for _, intent := range bridge.intents {
@@ -148,9 +148,9 @@ func TestTheBridgeClientCancelsATimedOutCallButNotOneItsCallerLeft(t *testing.T)
 	}
 }
 
-func TestTheBridgeClientRefusesToCallWithoutItsPrincipal(t *testing.T) {
-	client := &BridgeClient{BaseURL: "http://127.0.0.1:1", ServiceToken: "t"}
-	if _, err := client.Complete(context.Background(), CompletionRequest{Timeout: time.Second}); err == nil || !strings.Contains(err.Error(), "EVAL_STORE_PRINCIPAL_ID") {
+func TestTheBridgeClientRefusesToCallWithoutTheServiceToken(t *testing.T) {
+	client := &BridgeClient{BaseURL: "http://127.0.0.1:1"}
+	if _, err := client.Complete(context.Background(), CompletionRequest{Timeout: time.Second}); err == nil || !strings.Contains(err.Error(), "LLMBRIDGE_SERVICE_TOKEN") {
 		t.Errorf("Complete = %v", err)
 	}
 }

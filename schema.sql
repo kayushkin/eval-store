@@ -88,10 +88,9 @@ CREATE TABLE IF NOT EXISTS runs (
   -- JSON array of {subscription, window, max_used_percent}.
   budget_limits             TEXT NOT NULL,
   concurrency               INTEGER NOT NULL,
-  -- The principal-store group the calls are made for, and the principal that
-  -- made them, as they were when the run last started.
+  -- The principal-store group the calls are billed to, as it was when the
+  -- run last started.
   organization_id           TEXT NOT NULL DEFAULT '',
-  principal_id              TEXT NOT NULL DEFAULT '',
   -- JSON object model id -> {name, provider, input_cost, output_cost}, read
   -- from model-store when the run was created and never changed after.
   model_prices              TEXT NOT NULL,

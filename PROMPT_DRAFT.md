@@ -27,7 +27,7 @@ A run answers, checks, then judges. Every candidate answers every case, except a
 
 ## Every model call is a bridge operation
 
-Candidates and judges are called through llm-bridge-server's `POST /operations` (`llm.completion`), never a harness binary. Calls carry the service token and `X-Principal-Id` set to `EVAL_STORE_PRINCIPAL_ID`, so the bridge applies that principal's membership and grants and bills the run's `organization_id`. The operation's `model` is the model-store id. The idempotency key is `eval-store:<run>:<case>:<answer|judge>:<model>:<attempt>`: **a resumed run sends the same keys and is handed the first receipts**, so nothing is paid for twice. A failed call is retried only on `resume` with `retry_failed`, under the next attempt's key, because the bridge answers a reused key with the old failed receipt.
+Candidates and judges are called through llm-bridge-server's `POST /operations` (`llm.completion`), never a harness binary. Calls carry the service token alone, as scheduler's do: eval-store acts as the internal service, as no principal, and each intent bills the run's `organization_id` (default `EVAL_STORE_ORGANIZATION_ID`, a dedicated principal-store group). A run with no organization refuses to start. The operation's `model` is the model-store id. The idempotency key is `eval-store:<run>:<case>:<answer|judge>:<model>:<attempt>`: **a resumed run sends the same keys and is handed the first receipts**, so nothing is paid for twice. A failed call is retried only on `resume` with `retry_failed`, under the next attempt's key, because the bridge answers a reused key with the old failed receipt.
 
 ## The budget guard
 
@@ -49,7 +49,7 @@ Two suites and eight completed runs (`origin` `legacy-import`) came from the 202
 
 ## Who may call it
 
-No authentication; the unit binds `127.0.0.1` because cases hold real mail. Nothing proxies it yet. Unit `eval-store.service` (user), binary `~/bin/eval-store serve`. The service token, `EVAL_STORE_PRINCIPAL_ID` and `EVAL_STORE_ORGANIZATION_ID` come from host-local drop-ins in `~/.config/systemd/user/eval-store.service.d/`, never from the tracked unit.
+No authentication; the unit binds `127.0.0.1` because cases hold real mail. Nothing proxies it yet. Unit `eval-store.service` (user), binary `~/bin/eval-store serve`. The service token and `EVAL_STORE_ORGANIZATION_ID` come from host-local drop-ins in `~/.config/systemd/user/eval-store.service.d/`, never from the tracked unit.
 
 ## Importing from operations needs a bridge route
 

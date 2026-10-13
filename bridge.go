@@ -54,14 +54,12 @@ type ModelCaller interface {
 // A run stops on it rather than failing every remaining call the same way.
 var ErrBridgeBudgetRefused = errors.New("llm-bridge-server refused the call for budget")
 
-// BridgeClient speaks to llm-bridge-server's operations API as the eval-store
-// principal: the service token says the caller is an internal service, and
-// X-Principal-Id says which principal it acts for, so the bridge checks that
-// principal's membership of the organization and its grants.
+// BridgeClient speaks to llm-bridge-server's operations API as an internal
+// service, as scheduler does: the service token alone, acting as no
+// principal. Each call is billed to the organization the intent names.
 type BridgeClient struct {
 	BaseURL      string
 	ServiceToken string
-	PrincipalID  string
 	PollInterval time.Duration
 	HTTP         *http.Client
 }
@@ -72,8 +70,6 @@ func (b *BridgeClient) configured() error {
 		return errors.New("EVAL_STORE_LLM_BRIDGE_URL is not set, so there is no llm-bridge-server to call")
 	case b.ServiceToken == "":
 		return errors.New("LLMBRIDGE_SERVICE_TOKEN is not set, so llm-bridge-server would answer 401")
-	case b.PrincipalID == "":
-		return errors.New("EVAL_STORE_PRINCIPAL_ID is not set: eval-store calls the bridge as its own principal-store principal and has none")
 	}
 	return nil
 }
@@ -87,7 +83,6 @@ func (b *BridgeClient) do(ctx context.Context, method, path string, body []byte)
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-LLM-Bridge-Service-Token", b.ServiceToken)
-	request.Header.Set("X-Principal-Id", b.PrincipalID)
 	client := b.HTTP
 	if client == nil {
 		client = http.DefaultClient

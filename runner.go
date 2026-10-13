@@ -20,7 +20,6 @@ type RunDefaults struct {
 	AnswerTimeout         time.Duration
 	JudgeTimeout          time.Duration
 	OrganizationID        string
-	PrincipalID           string
 }
 
 // Runner creates runs and carries them out: candidates answer every case,
@@ -151,10 +150,7 @@ func (r *Runner) StartRun(id string, retryFailed bool) (*Run, error) {
 	if organizationID == "" {
 		return nil, invalidf("run %s names no organization and EVAL_STORE_ORGANIZATION_ID is not set: the bridge needs a principal-store group to bill", id)
 	}
-	if r.defaults.PrincipalID == "" {
-		return nil, invalidf("EVAL_STORE_PRINCIPAL_ID is not set: eval-store calls llm-bridge-server as its own principal")
-	}
-	if err := r.store.markRunStarted(id, organizationID, r.defaults.PrincipalID); err != nil {
+	if err := r.store.markRunStarted(id, organizationID); err != nil {
 		return nil, err
 	}
 	state := &goingRun{}

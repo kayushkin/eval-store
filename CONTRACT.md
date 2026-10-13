@@ -65,8 +65,8 @@ import (`cards`, `emails` for filing; `messages` for demo mail).
 frozen into `case_ids` at creation), `budget_limits` (`[{"subscription":"codex",
 "window":"weekly","max_used_percent":60}, …]`; defaults from
 `EVAL_STORE_DEFAULT_BUDGET_LIMITS`), `concurrency`, `organization_id` (the
-principal-store group billed; default `EVAL_STORE_ORGANIZATION_ID`),
-`principal_id` (recorded at start), `model_prices` (every model's provider and
+principal-store group billed, recorded at start; default
+`EVAL_STORE_ORGANIZATION_ID`; a run with neither refuses to start), `model_prices` (every model's provider and
 list price from model-store, frozen at creation), `prediction_id`, `note`,
 `origin` (`live` or `legacy-import`).
 
@@ -92,9 +92,9 @@ label exactly once; an invalid one is left out of every report figure.
 ## Model calls
 
 Every candidate and judge call is an `llm.completion` operation on
-llm-bridge-server, sent with `X-LLM-Bridge-Service-Token` and `X-Principal-Id:
-<EVAL_STORE_PRINCIPAL_ID>`, so the bridge holds the eval-store principal to its
-group membership and grants and bills the run's organization. The operation's
+llm-bridge-server, sent with `X-LLM-Bridge-Service-Token` alone, as scheduler
+sends its calls: eval-store acts as the internal service, as no principal, and
+each intent bills the run's `organization_id`. The operation's
 `model` is the model-store id. Idempotency key:
 `eval-store:<run>:<case>:<answer|judge>:<model>:<attempt>`; correlation id: the
 run id. A resumed run sends the same keys and is handed the first receipts.

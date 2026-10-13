@@ -24,7 +24,6 @@ const (
 	SettingServerURL                = "server_url"
 	SettingLLMBridgeURL             = "llm_bridge_url"
 	SettingLLMBridgeServiceToken    = "llm_bridge_service_token"
-	SettingPrincipalID              = "principal_id"
 	SettingOrganizationID           = "organization_id"
 	SettingModelStoreURL            = "model_store_url"
 	SettingUsageStoreURL            = "usage_store_url"
@@ -60,11 +59,9 @@ func SettingDefinitions() []servicesettings.Definition {
 		{Key: SettingLLMBridgeURL, EnvironmentVariable: "EVAL_STORE_LLM_BRIDGE_URL", Kind: msg.ServiceSettingKindWiring, ValueType: msg.ServiceSettingValueTypeString,
 			Description: "llm-bridge-server's base URL. Every model call is an llm.completion operation there. Without it a run cannot start and cases cannot be imported from operations."},
 		{Key: SettingLLMBridgeServiceToken, EnvironmentVariable: "LLMBRIDGE_SERVICE_TOKEN", Kind: msg.ServiceSettingKindSecret, ValueType: msg.ServiceSettingValueTypeString,
-			Description: "llm-bridge-server's internal service token, sent as X-LLM-Bridge-Service-Token together with X-Principal-Id, so each call is the eval-store principal's. Loaded from the shared principal-gating tokens file, as scheduler loads it."},
-		{Key: SettingPrincipalID, EnvironmentVariable: "EVAL_STORE_PRINCIPAL_ID", Kind: msg.ServiceSettingKindWiring, ValueType: msg.ServiceSettingValueTypeString,
-			Description: "The principal-store id eval-store acts as on llm-bridge-server. Its group membership and grants decide which organizations it may spend. A run refuses to start without it."},
+			Description: "llm-bridge-server's internal service token, sent as X-LLM-Bridge-Service-Token alone, so eval-store calls as an internal service and acts as no principal, as scheduler does. Loaded from the shared principal-gating tokens file, as scheduler loads it."},
 		{Key: SettingOrganizationID, EnvironmentVariable: "EVAL_STORE_ORGANIZATION_ID", Kind: msg.ServiceSettingKindWiring, ValueType: msg.ServiceSettingValueTypeString,
-			Description: "The principal-store group a run's calls are made for when the run names none. Its monthly operation budget pays for them."},
+			Description: "The principal-store group a run's calls are billed to when the run names none. Its monthly operation budget pays for them. A run with no organization refuses to start."},
 		{Key: SettingModelStoreURL, EnvironmentVariable: "EVAL_STORE_MODEL_STORE_URL", Kind: msg.ServiceSettingKindWiring, ValueType: msg.ServiceSettingValueTypeString,
 			Description: "model-store's base URL. A new run reads every model's provider and list price from GET /api/models there and freezes them on the run."},
 		{Key: SettingUsageStoreURL, EnvironmentVariable: "EVAL_STORE_USAGE_STORE_URL", Kind: msg.ServiceSettingKindWiring, ValueType: msg.ServiceSettingValueTypeString,

@@ -24,7 +24,6 @@ type Run struct {
 	BudgetLimits          []BudgetLimit         `json:"budget_limits"`
 	Concurrency           int                   `json:"concurrency"`
 	OrganizationID        string                `json:"organization_id"`
-	PrincipalID           string                `json:"principal_id"`
 	ModelPrices           map[string]ModelPrice `json:"model_prices"`
 	PricesNote            string                `json:"prices_note"`
 	PredictionID          string                `json:"prediction_id"`
@@ -196,23 +195,23 @@ func (s *Store) insertRun(tx *sql.Tx, run *Run) (string, error) {
 	now := s.unixNow()
 	return insertWithID(tx, "runs", runIDPrefix,
 		`suite_id, candidate_model_ids, judge_model_ids, original_answer_model_id, case_selection, case_ids, status, status_reason,
-		 budget_limits, concurrency, organization_id, principal_id, model_prices, prices_note, prediction_id, note, origin,
+		 budget_limits, concurrency, organization_id, model_prices, prices_note, prediction_id, note, origin,
 		 created_at, started_at, finished_at, updated_at`,
-		"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?",
+		"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?",
 		run.SuiteID, mustJSON(run.CandidateModelIDs), mustJSON(run.JudgeModelIDs), run.OriginalAnswerModelID, mustJSON(run.CaseSelection),
-		mustJSON(run.CaseIDs), run.Status, run.StatusReason, mustJSON(run.BudgetLimits), run.Concurrency, run.OrganizationID, run.PrincipalID,
+		mustJSON(run.CaseIDs), run.Status, run.StatusReason, mustJSON(run.BudgetLimits), run.Concurrency, run.OrganizationID,
 		mustJSON(run.ModelPrices), run.PricesNote, run.PredictionID, run.Note, run.Origin, now, run.StartedAt, run.FinishedAt, now)
 }
 
 const runColumns = `id, suite_id, candidate_model_ids, judge_model_ids, original_answer_model_id, case_selection, case_ids, status,
-	status_reason, budget_limits, concurrency, organization_id, principal_id, model_prices, prices_note, prediction_id, note, origin,
+	status_reason, budget_limits, concurrency, organization_id, model_prices, prices_note, prediction_id, note, origin,
 	created_at, started_at, finished_at, updated_at`
 
 func scanRun(row interface{ Scan(...any) error }) (*Run, error) {
 	var run Run
 	var candidates, judges, selection, caseIDs, limits, prices string
 	if err := row.Scan(&run.ID, &run.SuiteID, &candidates, &judges, &run.OriginalAnswerModelID, &selection, &caseIDs, &run.Status,
-		&run.StatusReason, &limits, &run.Concurrency, &run.OrganizationID, &run.PrincipalID, &prices, &run.PricesNote, &run.PredictionID,
+		&run.StatusReason, &limits, &run.Concurrency, &run.OrganizationID, &prices, &run.PricesNote, &run.PredictionID,
 		&run.Note, &run.Origin, &run.CreatedAt, &run.StartedAt, &run.FinishedAt, &run.UpdatedAt); err != nil {
 		return nil, err
 	}
@@ -275,10 +274,10 @@ func (s *Store) setRunStatus(id, status, reason string) error {
 	return err
 }
 
-func (s *Store) markRunStarted(id, organizationID, principalID string) error {
+func (s *Store) markRunStarted(id, organizationID string) error {
 	now := s.unixNow()
-	_, err := s.db.Exec(`UPDATE runs SET status=?, status_reason='', organization_id=?, principal_id=?, started_at=?, finished_at=0, updated_at=?
-		WHERE id=?`, RunStatusRunning, organizationID, principalID, now, now, id)
+	_, err := s.db.Exec(`UPDATE runs SET status=?, status_reason='', organization_id=?, started_at=?, finished_at=0, updated_at=?
+		WHERE id=?`, RunStatusRunning, organizationID, now, now, id)
 	return err
 }
 

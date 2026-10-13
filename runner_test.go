@@ -11,7 +11,7 @@ import (
 
 func newTestRunner(store *Store, caller ModelCaller, usage UsageReader) *Runner {
 	return NewRunner(store, caller, syntheticCatalog(), usage, RunDefaults{Concurrency: 2, BudgetLimits: syntheticLimits, BudgetCheckEveryCalls: 2,
-		AnswerTimeout: time.Minute, JudgeTimeout: time.Minute, OrganizationID: "principal_000900", PrincipalID: "principal_000901"})
+		AnswerTimeout: time.Minute, JudgeTimeout: time.Minute, OrganizationID: "principal_000900"})
 }
 
 // threeCaseRun makes a suite of three synthetic cases and a run of two
@@ -63,7 +63,7 @@ func TestARunAnswersChecksAndJudgesEveryCaseOnce(t *testing.T) {
 	if run.Status != RunStatusCompleted || run.StatusReason != "" {
 		t.Fatalf("run ended %s: %s", run.Status, run.StatusReason)
 	}
-	if run.OrganizationID != "principal_000900" || run.PrincipalID != "principal_000901" {
+	if run.OrganizationID != "principal_000900" {
 		t.Errorf("run did not record who it spent for: %+v", run)
 	}
 	// 3 cases × 2 replayed candidates, then 3 cases × 2 judges.
@@ -223,14 +223,10 @@ func TestABridgeBudgetRefusalStopsTheRunAndLeavesTheKeyFree(t *testing.T) {
 	}
 }
 
-func TestARunWillNotStartWithoutAPrincipalOrAnOrganization(t *testing.T) {
+func TestARunWillNotStartWithoutAnOrganization(t *testing.T) {
 	store := openTestStore(t)
-	runner := NewRunner(store, newFakeCaller(), syntheticCatalog(), &fakeUsage{}, RunDefaults{Concurrency: 1, BudgetCheckEveryCalls: 1, OrganizationID: "principal_000900"})
+	runner := NewRunner(store, newFakeCaller(), syntheticCatalog(), &fakeUsage{}, RunDefaults{Concurrency: 1, BudgetCheckEveryCalls: 1})
 	run := threeCaseRun(t, store, runner)
-	if _, err := runner.StartRun(run.ID, false); !errors.Is(err, ErrInvalid) || !strings.Contains(err.Error(), "EVAL_STORE_PRINCIPAL_ID") {
-		t.Errorf("start without a principal = %v", err)
-	}
-	runner.defaults.PrincipalID, runner.defaults.OrganizationID = "principal_000901", ""
 	if _, err := runner.StartRun(run.ID, false); !errors.Is(err, ErrInvalid) || !strings.Contains(err.Error(), "organization") {
 		t.Errorf("start without an organization = %v", err)
 	}

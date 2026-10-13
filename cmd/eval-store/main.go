@@ -82,7 +82,7 @@ func serve(settings *servicesettings.Registry) {
 	}
 
 	bridgeClient := &evalstore.BridgeClient{BaseURL: settings.String(evalstore.SettingLLMBridgeURL),
-		ServiceToken: settings.String(evalstore.SettingLLMBridgeServiceToken), PrincipalID: settings.String(evalstore.SettingPrincipalID),
+		ServiceToken: settings.String(evalstore.SettingLLMBridgeServiceToken),
 		PollInterval: settings.Duration(evalstore.SettingOperationPollingInterval)}
 	defaultLimits, err := evalstore.ParseBudgetLimits(settings.StringMap(evalstore.SettingDefaultBudgetLimits))
 	if err != nil {
@@ -92,8 +92,7 @@ func serve(settings *servicesettings.Registry) {
 		&evalstore.UsageStoreClient{BaseURL: settings.String(evalstore.SettingUsageStoreURL)},
 		evalstore.RunDefaults{Concurrency: settings.Integer(evalstore.SettingDefaultConcurrency), BudgetLimits: defaultLimits,
 			BudgetCheckEveryCalls: settings.Integer(evalstore.SettingBudgetCheckEveryCalls), AnswerTimeout: settings.Duration(evalstore.SettingAnswerTimeout),
-			JudgeTimeout: settings.Duration(evalstore.SettingJudgeTimeout), OrganizationID: settings.String(evalstore.SettingOrganizationID),
-			PrincipalID: settings.String(evalstore.SettingPrincipalID)})
+			JudgeTimeout: settings.Duration(evalstore.SettingJudgeTimeout), OrganizationID: settings.String(evalstore.SettingOrganizationID)})
 
 	var bridge evalstore.Bridge
 	if bridgeClient.BaseURL != "" {
