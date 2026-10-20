@@ -118,6 +118,7 @@ usage-store read before each.
 | `POST /suites/{id}/cases` | add one case |
 | `POST /suites/{id}/cases/import-operations` | body: `type` (only `llm.completion`), `organization_id`, `principal_id`, `correlation_id_prefix`, `created_after`, `created_before` (RFC 3339), `sample_size`, `seed`. Imports succeeded operations not yet in the suite. Answers `matched`, `already_imported`, `imported` (case ids) and `schema_differs` (operations whose schema is not the suite's). **Needs `GET /operations/{id}/intent` on llm-bridge-server, which does not exist yet: 502 until it does.** |
 | `GET /cases/{id}` | one case **with** its prompts and original answer |
+| `PATCH /cases/{id}` | `{"expected_answer": …}`, the only field that changes: replaces the expectation (held to the suite's checker, 400 otherwise) and recomputes `features`. Stored checks are left as they were; `POST /runs/{id}/checks` runs the checker again |
 | `GET /runs?suite_id=` · `POST /runs` | list (newest first); create (prices read from model-store; an unknown model is a 400) |
 | `GET /runs/{id}` | the run and its `progress` |
 | `PATCH /runs/{id}` | `prediction_id`, `note` |

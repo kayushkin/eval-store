@@ -38,6 +38,7 @@ func RegisterHandlers(mux *http.ServeMux, store *Store, runner *Runner, bridge B
 	mux.HandleFunc("POST /suites/{id}/cases", s.createCase)
 	mux.HandleFunc("POST /suites/{id}/cases/import-operations", s.importOperations)
 	mux.HandleFunc("GET /cases/{id}", s.getCase)
+	mux.HandleFunc("PATCH /cases/{id}", s.patchCase)
 
 	mux.HandleFunc("GET /runs", s.listRuns)
 	mux.HandleFunc("POST /runs", s.createRun)
@@ -169,6 +170,18 @@ func (s *Server) importOperations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+func (s *Server) patchCase(w http.ResponseWriter, r *http.Request) {
+	var patch CasePatch
+	if !decode(w, r, &patch) {
+		return
+	}
+	c, err := s.store.PatchCase(r.PathValue("id"), patch)
+	if writeStoreError(w, err) {
+		return
+	}
+	writeJSON(w, http.StatusOK, c)
 }
 
 func (s *Server) getCase(w http.ResponseWriter, r *http.Request) {

@@ -195,3 +195,33 @@ func TestOpenAddsExpectedAnswerToAnOlderDatabase(t *testing.T) {
 		t.Errorf("expected_answer = %s, want none", c.ExpectedAnswer)
 	}
 }
+
+func TestPatchingACaseChangesOnlyItsExpectedAnswer(t *testing.T) {
+	store := openTestStore(t)
+	suite := turnEndSuite(t, store)
+	created, err := store.CreateCase(suite.ID, &Case{SourceKind: SourceKindClaudeCodeTranscript, SourceRef: "br_synthetic_patch",
+		SystemPrompt: "Classify.", UserPrompt: turnEndCase("").UserPrompt, ExpectedAnswer: json.RawMessage(syntheticTwoQuestionExpectation)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bounded := `{"kind":"question","minimum_questions":2,"maximum_questions":3}`
+	patched, err := store.PatchCase(created.ID, CasePatch{ExpectedAnswer: json.RawMessage(bounded)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(patched.ExpectedAnswer) != bounded || patched.UserPrompt != created.UserPrompt || patched.SystemPrompt != created.SystemPrompt {
+		t.Errorf("patched case = %+v", patched)
+	}
+	if patched.Features["expected_questions"] != 0 {
+		t.Errorf("features not recomputed: %v", patched.Features)
+	}
+	for _, refused := range []string{``, `null`, `{"kind":"question"}`} {
+		if _, err := store.PatchCase(created.ID, CasePatch{ExpectedAnswer: json.RawMessage(refused)}); !errors.Is(err, ErrInvalid) {
+			t.Errorf("patch %q = %v, want invalid", refused, err)
+		}
+	}
+	email := addEmailCase(t, store, emailSuite(t, store), "patch")
+	if _, err := store.PatchCase(email.ID, CasePatch{ExpectedAnswer: json.RawMessage(`{"kind":"neither"}`)}); !errors.Is(err, ErrInvalid) {
+		t.Errorf("patching a case whose checker reads no expectation = %v, want invalid", err)
+	}
+}

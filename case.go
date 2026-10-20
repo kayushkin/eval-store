@@ -129,6 +129,44 @@ func (s *Store) CreateCase(suiteID string, c *Case) (*Case, error) {
 	return s.GetCase(id)
 }
 
+// CasePatch is the one part of a case that may change after it is added: the
+// expected answer, which is someone's judgement about the call rather than
+// part of it. The prompts and the original answer stay frozen.
+type CasePatch struct {
+	ExpectedAnswer json.RawMessage `json:"expected_answer"`
+}
+
+// PatchCase replaces a case's expected answer, held to the suite's checker as
+// when the case was added, and recomputes the case's features from it. Checks
+// already stored for runs over the case are not touched; POST
+// /runs/{id}/checks runs the checker again.
+func (s *Store) PatchCase(id string, patch CasePatch) (*Case, error) {
+	if len(patch.ExpectedAnswer) == 0 || string(patch.ExpectedAnswer) == "null" {
+		return nil, invalidf("expected_answer is required; it is the only field a case patch changes")
+	}
+	c, err := s.GetCase(id)
+	if err != nil {
+		return nil, err
+	}
+	suite, err := s.GetSuite(c.SuiteID)
+	if err != nil {
+		return nil, err
+	}
+	reader, ok := checkers[suite.CheckerName].(ExpectedAnswerReader)
+	if !ok {
+		return nil, invalidf("suite %s's checker %q reads no expected_answer", suite.ID, suite.CheckerName)
+	}
+	if err := reader.ValidateExpectedAnswer(patch.ExpectedAnswer); err != nil {
+		return nil, invalidf("case expected_answer: %v", err)
+	}
+	c.ExpectedAnswer = patch.ExpectedAnswer
+	features := checkers[suite.CheckerName].Features(c)
+	if _, err := s.db.Exec("UPDATE cases SET expected_answer = ?, features = ? WHERE id = ?", string(patch.ExpectedAnswer), mustJSON(features), id); err != nil {
+		return nil, fmt.Errorf("update case %s: %w", id, err)
+	}
+	return s.GetCase(id)
+}
+
 // GetCase reads one case with its prompts and original answer.
 func (s *Store) GetCase(id string) (*Case, error) {
 	c, err := scanCase(s.db.QueryRow("SELECT "+caseSummaryColumns+", system_prompt, user_prompt, original_answer, expected_answer FROM cases WHERE id = ?", id), true)

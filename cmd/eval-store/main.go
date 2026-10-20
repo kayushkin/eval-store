@@ -31,7 +31,7 @@ The rest talk to the server at EVAL_STORE_URL. A <json> argument is a file, or -
 
   health | settings | vocabulary
   suites | suite <id> | suite-create <json> | suite-patch <id> <json> | suite-delete <id>
-  cases <suite> | case <id> | case-create <suite> <json> | import-operations <suite> <json>
+  cases <suite> | case <id> | case-create <suite> <json> | case-patch <id> <json> | import-operations <suite> <json>
   runs [suite] | run <id> | run-create <json> | run-patch <id> <json> | run-delete <id>
   start <run> | resume <run> [--retry-failed] | stop <run>
   answers <run> [--include-bodies] | verdicts <run> [--include-bodies] | checks <run> | recheck <run>
@@ -179,6 +179,11 @@ func runClientVerb(serverURL, verb string, arguments []string) error {
 	case "case":
 		if err = need(1); err == nil {
 			method, path = http.MethodGet, "/cases/"+escape(positional[0])
+		}
+	case "case-patch":
+		if err = need(2); err == nil {
+			method, path = http.MethodPatch, "/cases/"+escape(positional[0])
+			body, err = readBody(positional[1])
 		}
 	case "case-create", "import-operations":
 		if err = need(2); err == nil {
