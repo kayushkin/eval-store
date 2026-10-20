@@ -26,10 +26,20 @@ type Checker interface {
 	Choices(c *Case, answer json.RawMessage) map[string]string
 }
 
+// ExpectedAnswerReader is a checker that compares an answer with what the
+// case says a right answer must hold. ValidateExpectedAnswer runs when a case
+// is added, so a malformed expectation is refused then rather than failing
+// every answer later; an empty one is allowed when the checker can still
+// check something without it.
+type ExpectedAnswerReader interface {
+	ValidateExpectedAnswer(expected json.RawMessage) error
+}
+
 // checkers is every checker a suite may name.
 var checkers = map[string]Checker{
-	"email-filing": emailFilingChecker{},
-	"demo-mail":    demoMailChecker{},
+	"email-filing":    emailFilingChecker{},
+	"demo-mail":       demoMailChecker{},
+	"turn-end-signal": turnEndSignalChecker{},
 }
 
 // CheckerNames lists the registered checkers.

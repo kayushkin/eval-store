@@ -28,7 +28,11 @@ type Case struct {
 	OriginalDurationMs       *int64             `json:"original_duration_ms"`
 	OriginalAt               int64              `json:"original_at"`
 	Features                 map[string]float64 `json:"features"`
-	CreatedAt                int64              `json:"created_at"`
+	// ExpectedAnswer is what a right answer must hold, in the shape the
+	// suite's checker reads, written by whoever added the case. Empty when
+	// nobody wrote one. It is read only with the bodies.
+	ExpectedAnswer json.RawMessage `json:"expected_answer,omitempty"`
+	CreatedAt      int64           `json:"created_at"`
 	// HasBodies says whether the prompts and the answer were read. A list
 	// leaves them out; only GET /cases/{id} carries them.
 	HasBodies bool `json:"has_bodies"`
@@ -51,11 +55,11 @@ func scanCase(row interface{ Scan(...any) error }, withBodies bool) (*Case, erro
 	var duration sql.NullInt64
 	var features string
 	var system, prompt string
-	var answer sql.NullString
+	var answer, expected sql.NullString
 	targets := []any{&c.ID, &c.SuiteID, &c.SourceKind, &c.SourceRef, &c.OriginalModelID, &usageKnown, &c.OriginalInputTokens,
 		&c.OriginalCacheReadTokens, &c.OriginalCacheWriteTokens, &c.OriginalOutputTokens, &duration, &c.OriginalAt, &features, &c.CreatedAt}
 	if withBodies {
-		targets = append(targets, &system, &prompt, &answer)
+		targets = append(targets, &system, &prompt, &answer, &expected)
 	}
 	if err := row.Scan(targets...); err != nil {
 		return nil, err
@@ -66,7 +70,7 @@ func scanCase(row interface{ Scan(...any) error }, withBodies bool) (*Case, erro
 		return nil, err
 	}
 	if withBodies {
-		c.SystemPrompt, c.UserPrompt, c.OriginalAnswer, c.HasBodies = system, prompt, rawFromNullable(answer), true
+		c.SystemPrompt, c.UserPrompt, c.OriginalAnswer, c.ExpectedAnswer, c.HasBodies = system, prompt, rawFromNullable(answer), rawFromNullable(expected), true
 	}
 	return &c, nil
 }
@@ -83,16 +87,26 @@ func insertCase(tx *sql.Tx, suite *Suite, c *Case, now int64) (string, error) {
 	}
 	features := map[string]float64{}
 	if suite.CheckerName != "" {
-		features = checkers[suite.CheckerName].Features(c)
+		checker := checkers[suite.CheckerName]
+		if reader, ok := checker.(ExpectedAnswerReader); ok {
+			if err := reader.ValidateExpectedAnswer(c.ExpectedAnswer); err != nil {
+				return "", invalidf("case expected_answer: %v", err)
+			}
+		} else if len(c.ExpectedAnswer) > 0 {
+			return "", invalidf("checker %s reads no expected_answer, so a case of suite %s cannot carry one", suite.CheckerName, suite.ID)
+		}
+		features = checker.Features(c)
+	} else if len(c.ExpectedAnswer) > 0 {
+		return "", invalidf("suite %s has no checker to read an expected_answer", suite.ID)
 	}
 	id, err := insertWithID(tx, "cases", caseIDPrefix,
 		`suite_id, source_kind, source_ref, system_prompt, user_prompt, original_model_id, original_answer, original_usage_known,
 		 original_input_tokens, original_cache_read_tokens, original_cache_write_tokens, original_output_tokens, original_duration_ms,
-		 original_at, features, created_at`,
-		"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?",
+		 original_at, features, created_at, expected_answer`,
+		"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?",
 		suite.ID, c.SourceKind, c.SourceRef, c.SystemPrompt, c.UserPrompt, c.OriginalModelID, nullableRaw(c.OriginalAnswer), boolToInt(c.OriginalUsageKnown),
 		c.OriginalInputTokens, c.OriginalCacheReadTokens, c.OriginalCacheWriteTokens, c.OriginalOutputTokens, nullableInt(c.OriginalDurationMs),
-		c.OriginalAt, mustJSON(features), now)
+		c.OriginalAt, mustJSON(features), now, nullableRaw(c.ExpectedAnswer))
 	if err != nil && strings.Contains(err.Error(), "UNIQUE constraint failed: cases.suite_id") {
 		return "", conflictf("suite %s already has a case from %s %s", suite.ID, c.SourceKind, c.SourceRef)
 	}
@@ -117,7 +131,7 @@ func (s *Store) CreateCase(suiteID string, c *Case) (*Case, error) {
 
 // GetCase reads one case with its prompts and original answer.
 func (s *Store) GetCase(id string) (*Case, error) {
-	c, err := scanCase(s.db.QueryRow("SELECT "+caseSummaryColumns+", system_prompt, user_prompt, original_answer FROM cases WHERE id = ?", id), true)
+	c, err := scanCase(s.db.QueryRow("SELECT "+caseSummaryColumns+", system_prompt, user_prompt, original_answer, expected_answer FROM cases WHERE id = ?", id), true)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("%w: case %s", ErrNotFound, id)
 	}

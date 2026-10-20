@@ -93,7 +93,34 @@ func Open(dataDir string) (*Store, error) {
 		db.Close()
 		return nil, fmt.Errorf("apply schema: %w", err)
 	}
+	if err := addMissingColumns(db); err != nil {
+		db.Close()
+		return nil, err
+	}
 	return &Store{db: db, dataDir: dataDir, now: time.Now}, nil
+}
+
+// columnsAddedAfterCreation are columns schema.sql declares that a database
+// created before them lacks. CREATE TABLE IF NOT EXISTS leaves an existing
+// table alone, so each is added here when missing.
+var columnsAddedAfterCreation = []struct{ table, column, definition string }{
+	{"cases", "expected_answer", "TEXT"},
+}
+
+func addMissingColumns(db *sql.DB) error {
+	for _, added := range columnsAddedAfterCreation {
+		var count int
+		if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?", added.table, added.column).Scan(&count); err != nil {
+			return fmt.Errorf("read columns of %s: %w", added.table, err)
+		}
+		if count > 0 {
+			continue
+		}
+		if _, err := db.Exec("ALTER TABLE " + added.table + " ADD COLUMN " + added.column + " " + added.definition); err != nil {
+			return fmt.Errorf("add column %s.%s: %w", added.table, added.column, err)
+		}
+	}
+	return nil
 }
 
 // requirePrivateMode refuses a path that group or others can reach.

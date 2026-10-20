@@ -55,7 +55,11 @@ case per source. The prompts, the original answer, its usage
 `original_cache_write_tokens`, `original_output_tokens`, `original_usage_known`),
 `original_duration_ms` and `original_model_id` are a **snapshot**, because the
 sources may be pruned. `features` are numbers the suite's checker computed at
-import (`cards`, `emails` for filing; `messages` for demo mail).
+import (`cards`, `emails` for filing; `messages` for demo mail; `expected_questions`
+for turn-end signals). `expected_answer` is optional JSON, written by whoever adds the
+case, saying what a right answer holds in the shape the suite's checker reads; a checker
+that reads it refuses an unreadable one when the case is added (400), a suite whose checker
+reads none refuses any, and only `GET /cases/{id}` returns it.
 
 ### Run
 

@@ -32,7 +32,7 @@ A run reads every model's provider and list price from model-store's `GET /api/m
 
 ## Checkers and cost models belong to suites
 
-A checker (`checker.go`) computes a case's features at import, checks an answer, and says what an answer chose per unit for agreement with the baseline. `email-filing` ports the bench's `mechanical.py`; `demo-mail` checks message keys and flags **a sender greeting themselves by name**, the defect the bench found in gpt-5.6-luna and which claude-haiku-5-5 shares. The cost projection is generic: which features exist, which coefficients are pinned, and how a timed task batches its work are fields of the suite's `cost_model`, never constants in `cost_projection.go`.
+A checker (`checker.go`) computes a case's features at import, checks an answer, and says what an answer chose per unit for agreement with the baseline. `email-filing` ports the bench's `mechanical.py`; `demo-mail` checks message keys and flags **a sender greeting themselves by name**, the defect the bench found in gpt-5.6-luna and which claude-haiku-5-5 shares. `turn-end-signal` checks llm-bridge-server's turn-end classifier against each case's `expected_answer` (kind, one question per separate decision, options per question) and flags option labels that name no choice ("c", "PRs: choose a, b, or c"), the defect of 2026-10-20 that made it. The cost projection is generic: which features exist, which coefficients are pinned, and how a timed task batches its work are fields of the suite's `cost_model`, never constants in `cost_projection.go`.
 
 ## The imported bench
 

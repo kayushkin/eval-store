@@ -66,6 +66,10 @@ CREATE TABLE IF NOT EXISTS cases (
   -- JSON object of numbers the suite's checker computed at import.
   features                     TEXT NOT NULL DEFAULT '{}',
   created_at                   INTEGER NOT NULL,
+  -- What a right answer must hold, as JSON in the shape the suite's checker
+  -- reads, written by whoever added the case; NULL when nobody wrote one.
+  -- addMissingColumns adds it to a database made before it existed.
+  expected_answer              TEXT,
   UNIQUE (suite_id, source_kind, source_ref)
 );
 CREATE INDEX IF NOT EXISTS cases_suite ON cases(suite_id);
