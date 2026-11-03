@@ -25,7 +25,7 @@ func turnEndCase(expected string) *Case {
 
 func TestTurnEndSignalCheckerPassesAnAnswerSplitIntoItsQuestions(t *testing.T) {
 	answer := json.RawMessage(`{"kind":"question","questions":[
-		{"question":"Which colour should the shed be?","options":[{"label":"Red"},{"label":"Blue"},{"label":"Green"}]},
+		{"question":"Which color should the shed be?","options":[{"label":"Red"},{"label":"Blue"},{"label":"Green"}]},
 		{"question":"Where should the shed go?","options":[]}]}`)
 	results := checkByName(turnEndSignalChecker{}.Check(turnEndCase(syntheticTwoQuestionExpectation), answer))
 	for _, name := range []string{CheckKindMatchesExpected, CheckQuestionCountMatchesExpected, CheckOptionCountsMatchExpected, CheckOptionLabelsNameAChoice} {
@@ -39,7 +39,7 @@ func TestTurnEndSignalCheckerPassesAnAnswerSplitIntoItsQuestions(t *testing.T) {
 // option labels that only tell the person to choose.
 func TestTurnEndSignalCheckerCatchesMergedQuestionsAndPlaceholderLabels(t *testing.T) {
 	answer := json.RawMessage(`{"kind":"question","questions":[
-		{"question":"Which option do you want for colour and place?","options":[{"label":"Colour: choose a, b, or c"},{"label":"Place: choose a or b"}]}]}`)
+		{"question":"Which option do you want for color and place?","options":[{"label":"Color: choose a, b, or c"},{"label":"Place: choose a or b"}]}]}`)
 	results := checkByName(turnEndSignalChecker{}.Check(turnEndCase(syntheticTwoQuestionExpectation), answer))
 	if r := results[CheckQuestionCountMatchesExpected]; r.Passed || !strings.Contains(r.Detail, "expected 2 questions, answered 1") {
 		t.Errorf("question count: %+v", r)

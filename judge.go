@@ -42,7 +42,7 @@ func judgeSystemPrompt(n int) string {
 	labels := labelsFor(n)
 	count := numberWord(n)
 	return fmt.Sprintf("You are a strict, careful evaluator. You will see a task given to a model (its system prompt and user prompt) "+
-		"and up to %s candidate answers, labelled %s to %s, in random order. The candidates come from different models; you do not know "+
+		"and up to %s candidate answers, labeled %s to %s, in random order. The candidates come from different models; you do not know "+
 		"which is which. Rank all %s labels best to worst, and for each label say whether it is acceptable, the main failure kind "+
 		"(%s when acceptable and flawless), and one line of reason. A candidate that says NO ANSWER failed to produce output: rank it "+
 		"last and mark it unacceptable with failure_kind %s.", count, labels[0], labels[n-1], count, FailureKindNone, FailureKindNoAnswer)

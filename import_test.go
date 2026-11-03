@@ -52,7 +52,7 @@ func writeSyntheticBench(t *testing.T) string {
 		replay("transcript-3", "demo", "model-small", demo))
 	write("replay-claude.jsonl", replay("transcript-1", "email", "model-large", filing("e1")), replay("transcript-2", "email", "model-large", filing("e2")),
 		replay("transcript-3", "demo", "model-large", demo))
-	judgement := func(id, cmd string, mapping map[string]string, ranking []string, malformed bool) map[string]any {
+	judgment := func(id, cmd string, mapping map[string]string, ranking []string, malformed bool) map[string]any {
 		var verdicts []map[string]any
 		for _, label := range ranking {
 			verdicts = append(verdicts, map[string]any{"label": label, "acceptable": label != "B", "failure_kind": "none", "reason": "r"})
@@ -66,11 +66,11 @@ func writeSyntheticBench(t *testing.T) string {
 	two := map[string]string{"A": "model-small", "B": "model-original"}
 	three := map[string]string{"A": "model-large", "B": "model-small", "C": "model-original"}
 	for _, judge := range []string{"judge-a", "judge-b"} {
-		write("judge-"+judge+".jsonl", judgement("transcript-1", "email", two, []string{"A", "B"}, false),
-			judgement("transcript-2", "email", two, []string{"B", "A"}, false), judgement("transcript-3", "demo", two, []string{"A", "B"}, false))
-		write("judge3-"+judge+".jsonl", judgement("transcript-1", "email", three, []string{"A", "B", "C"}, false),
-			judgement("transcript-2", "email", three, []string{"C", "B", "A"}, judge == "judge-b"),
-			judgement("transcript-3", "demo", three, []string{"B", "A", "C"}, false))
+		write("judge-"+judge+".jsonl", judgment("transcript-1", "email", two, []string{"A", "B"}, false),
+			judgment("transcript-2", "email", two, []string{"B", "A"}, false), judgment("transcript-3", "demo", two, []string{"A", "B"}, false))
+		write("judge3-"+judge+".jsonl", judgment("transcript-1", "email", three, []string{"A", "B", "C"}, false),
+			judgment("transcript-2", "email", three, []string{"C", "B", "A"}, judge == "judge-b"),
+			judgment("transcript-3", "demo", three, []string{"B", "A", "C"}, false))
 	}
 	return dir
 }

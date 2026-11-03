@@ -51,7 +51,7 @@ func NewRunner(store *Store, caller ModelCaller, catalog ModelCatalog, usage Usa
 		going: map[string]*goingRun{}, shutdown: shutdown, cancelShutdown: cancel}
 }
 
-// Close ends every going run without cancelling the calls in flight on the
+// Close ends every going run without canceling the calls in flight on the
 // bridge: they finish there, and a resumed run collects them by their
 // idempotency keys. The runs are left interrupted.
 func (r *Runner) Close() {

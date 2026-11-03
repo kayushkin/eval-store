@@ -130,7 +130,7 @@ func (s *Store) CreateCase(suiteID string, c *Case) (*Case, error) {
 }
 
 // CasePatch is the one part of a case that may change after it is added: the
-// expected answer, which is someone's judgement about the call rather than
+// expected answer, which is someone's judgment about the call rather than
 // part of it. The prompts and the original answer stay frozen.
 type CasePatch struct {
 	ExpectedAnswer json.RawMessage `json:"expected_answer"`

@@ -91,8 +91,8 @@ type legacyReplay struct {
 	Error      string          `json:"error"`
 }
 
-// legacyJudgement is one row of a judge*-<model>.jsonl file.
-type legacyJudgement struct {
+// legacyJudgment is one row of a judge*-<model>.jsonl file.
+type legacyJudgment struct {
 	ID         string            `json:"id"`
 	Command    string            `json:"cmd"`
 	Mapping    map[string]string `json:"mapping"`
@@ -406,7 +406,7 @@ type legacyJudging struct {
 	prefix     string
 	judges     []string
 	candidates map[string]bool
-	rows       map[string][]legacyJudgement
+	rows       map[string][]legacyJudgment
 }
 
 func readLegacyJudgings(dir string) ([]*legacyJudging, error) {
@@ -423,10 +423,10 @@ func readLegacyJudgings(dir string) ([]*legacyJudging, error) {
 		prefix, judge := match[1], match[2]
 		judging := byPrefix[prefix]
 		if judging == nil {
-			judging = &legacyJudging{prefix: prefix, rows: map[string][]legacyJudgement{}}
+			judging = &legacyJudging{prefix: prefix, rows: map[string][]legacyJudgment{}}
 			byPrefix[prefix] = judging
 		}
-		rows, err := readJSONLines[legacyJudgement](filepath.Join(dir, entry.Name()))
+		rows, err := readJSONLines[legacyJudgment](filepath.Join(dir, entry.Name()))
 		if err != nil {
 			return nil, err
 		}

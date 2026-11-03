@@ -25,7 +25,7 @@ import (
 //
 // questions, when given, fixes how many questions there are and, in the
 // assistant's order, how many options each has (null: any number). When the
-// number of questions is a judgement call, minimum_questions and
+// number of questions is a judgment call, minimum_questions and
 // maximum_questions bound it instead.
 type turnEndSignalChecker struct{}
 

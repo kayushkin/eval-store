@@ -56,7 +56,7 @@ type ReportJudge struct {
 	// IsCandidate: the judge also answered, so it ranks its own answer.
 	IsCandidate bool `json:"is_candidate"`
 	// SharesProviderWith lists the candidates of the judge's own provider,
-	// whose answers it may favour.
+	// whose answers it may favor.
 	SharesProviderWith []string `json:"shares_provider_with"`
 	Valid              int      `json:"valid_verdicts"`
 	Malformed          int      `json:"malformed_verdicts"`

@@ -24,7 +24,7 @@ type fakeBridge struct {
 	reads      map[string]int
 	finish     func(intent msg.OperationIntent, receipt *msg.OperationReceipt)
 	refuseNext bool
-	cancelled  []string
+	canceled  []string
 }
 
 func newFakeBridge(finish func(msg.OperationIntent, *msg.OperationReceipt)) (*fakeBridge, *httptest.Server) {
@@ -64,7 +64,7 @@ func newFakeBridge(finish func(msg.OperationIntent, *msg.OperationReceipt)) (*fa
 	mux.HandleFunc("POST /operations/{id}/cancel", func(w http.ResponseWriter, r *http.Request) {
 		bridge.mutex.Lock()
 		defer bridge.mutex.Unlock()
-		bridge.cancelled = append(bridge.cancelled, r.PathValue("id"))
+		bridge.canceled = append(bridge.canceled, r.PathValue("id"))
 	})
 	server := httptest.NewServer(mux)
 	return bridge, server
@@ -143,8 +143,8 @@ func TestTheBridgeClientCancelsATimedOutCallButNotOneItsCallerLeft(t *testing.T)
 	}
 	bridge.mutex.Lock()
 	defer bridge.mutex.Unlock()
-	if len(bridge.cancelled) != 1 || !strings.Contains(bridge.cancelled[0], "timed-out") {
-		t.Errorf("cancelled %v, want only the timed-out call", bridge.cancelled)
+	if len(bridge.canceled) != 1 || !strings.Contains(bridge.canceled[0], "timed-out") {
+		t.Errorf("canceled %v, want only the timed-out call", bridge.canceled)
 	}
 }
 

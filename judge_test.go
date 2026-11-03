@@ -74,7 +74,7 @@ func TestTheJudgePromptShowsEveryLabelAndNoAnswerForAMissingOne(t *testing.T) {
 	if strings.Contains(prompt, "model-") {
 		t.Error("the prompt names a model")
 	}
-	if system := judgeSystemPrompt(8); !strings.Contains(system, "up to eight candidate answers, labelled A to H") {
+	if system := judgeSystemPrompt(8); !strings.Contains(system, "up to eight candidate answers, labeled A to H") {
 		t.Errorf("system prompt: %s", system)
 	}
 }
